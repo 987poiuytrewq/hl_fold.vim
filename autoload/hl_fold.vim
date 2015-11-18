@@ -4,26 +4,25 @@ sign define HlFoldStart text=┌
 sign define HlFoldMid   text=│
 sign define HlFoldEnd   text=└
 
-autocmd CursorMoved <buffer> call hl_fold#highlight_fold()
+let s:last_cursor_moved = reltime()
+let g:hl_fold_cursor_hold = 0.1
+
+autocmd CursorMoved <buffer> call hl_fold#highlight_fold_lazy()
+autocmd CursorHold <buffer> call hl_fold#highlight_fold()
+
+function! hl_fold#highlight_fold_lazy()
+  let hold = str2float(reltimestr(reltime(s:last_cursor_moved)))
+  if hold > g:hl_fold_cursor_hold
+    call hl_fold#highlight_fold()
+  endif
+  let s:last_cursor_moved = reltime()
+endfunction
 
 function! hl_fold#highlight_fold()
   " find fold level edges and highlight them
   let initial_line = line('.')
   let start_line = s:find_fold_edge(initial_line, -1)
   let end_line = s:find_fold_edge(initial_line, +1)
-
-  if exists('b:hl_fold_start_line')
-    let old_start_line = b:hl_fold_start_line
-  else
-    let old_start_line = '-'
-  endif
-  if exists('b:hl_fold_end_line')
-    let old_end_line = b:hl_fold_end_line
-  else
-    let old_end_line = '-'
-  endif
-
-  echo "[" . old_start_line . " , " . old_end_line . "] -> [" . start_line . " , " . end_line . "]"
 
   call s:update_signs(start_line, end_line)
 endfunction
