@@ -1,3 +1,4 @@
+set foldenable
 let g:hl_fold_sign_id_offset = 1000
 sign define HlFoldStart text=┌
 sign define HlFoldMid   text=│
@@ -11,10 +12,20 @@ function! hl_fold#highlight_fold()
   let start_line = s:find_fold_edge(initial_line, -1)
   let end_line = s:find_fold_edge(initial_line, +1)
 
-  call s:update_signs(start_line, end_line)
+  if exists('b:hl_fold_start_line')
+    let old_start_line = b:hl_fold_start_line
+  else
+    let old_start_line = '-'
+  endif
+  if exists('b:hl_fold_end_line')
+    let old_end_line = b:hl_fold_end_line
+  else
+    let old_end_line = '-'
+  endif
 
-  let b:hl_fold_start_line = start_line
-  let b:hl_fold_end_line = end_line
+  echo "[" . old_start_line . " , " . old_end_line . "] -> [" . start_line . " , " . end_line . "]"
+
+  call s:update_signs(start_line, end_line)
 endfunction
 
 function! s:find_fold_edge(initial_line, increment)
@@ -29,25 +40,67 @@ function! s:find_fold_edge(initial_line, increment)
 endfunction
 
 function! s:update_signs(start_line, end_line)
-  " update the current signs to the new signs, updating the minimum
-  " number of signs in the process
+  " update the old signs to the new signs
   let buffer = bufnr('%')
 
-  " due to the nature of folds, we need only see if the start has moved to
-  " infer that the end has also moved
-  if (exists('b:hl_fold_start_line') && a:start_line != b:hl_fold_start_line) || !exists('b:hl_fold_start_line')
-    " unplace signs
+  " only update signs if the fold has changed
+
+  let old_fold = exists('b:hl_fold_start_line') && exists('b:hl_fold_end_line')
+  let new_fold = a:end_line > a:start_line
+  let update_start = !old_fold || !new_fold || a:start_line != b:hl_fold_start_line
+  let update_end = !old_fold || !new_fold || a:end_line != b:hl_fold_end_line
+
+  if update_start
+    " move the start sign
     call s:unplace_sign(s:start_sign_id(), buffer)
-    call s:unplace_sign(s:end_sign_id(), buffer)
-    if a:end_line > a:start_line
-      " place new signs
+    if new_fold
       call s:place_sign(s:start_sign_id(), buffer, a:start_line, 'HlFoldStart')
+    endif
+  endif
+
+  if update_end
+    " move the end sign
+    call s:unplace_sign(s:end_sign_id(), buffer)
+    if new_fold
       call s:place_sign(s:end_sign_id(), buffer, a:end_line, 'HlFoldEnd')
     endif
-  end
+  endif
 
-  " diff the mid ranges and unplace those outside the fold and place those
-  " newly inside the fold, leaving others unchanged
+  if update_start || update_end
+    if exists('b:hl_fold_start_line') && exists('b:hl_fold_end_line')
+      " unplace signs inside old fold but not inside new fold and
+      " place signs inside new fold but not inside old fold
+      let line = min([a:start_line, b:hl_fold_start_line])
+      while line < max([a:end_line, b:hl_fold_end_line])
+        if line > b:hl_fold_start_line && line < b:hl_fold_end_line
+              \ && (line <= a:start_line || line >= a:end_line)
+          " line in old fold but not in new fold
+          call s:unplace_sign(s:mid_sign_id(line), buffer)
+        elseif new_fold
+              \ && line > a:start_line && line < a:end_line
+              \ && (line <= b:hl_fold_start_line || line >= b:hl_fold_end_line)
+          " line in new fold but not in old fold
+          call s:place_sign(s:mid_sign_id(line), buffer, line, 'HlFoldMid')
+        endif
+        let line += 1
+      endwhile
+    else
+      " just place the mid signs
+      let line = a:start_line + 1
+      while line < a:end_line
+        call s:place_sign(s:mid_sign_id(line), buffer, line, 'HlFoldMid')
+        let line += 1
+      endwhile
+    endif
+  endif
+
+  if new_fold
+    let b:hl_fold_start_line = a:start_line
+    let b:hl_fold_end_line = a:end_line
+  elseif old_fold
+    unlet b:hl_fold_start_line
+    unlet b:hl_fold_end_line
+  endif
 endfunction
 
 function! s:place_sign(sign_id, buffer, line, name)
@@ -60,18 +113,18 @@ endfunction
 
 function! s:unplace_sign(sign_id, buffer)
   " wrapper for unplacing a sign
-  execute 'sign unplace ' .a:sign_id
+  execute 'sign unplace ' . a:sign_id
         \ . ' buffer=' . a:buffer
 endfunction
 
 function! s:start_sign_id()
-  return g:hl_fold_sign_id_offset - 1
+  return g:hl_fold_sign_id_offset
 endfunction
 
 function! s:end_sign_id()
-  return g:hl_fold_sign_id_offset - 2
+  return g:hl_fold_sign_id_offset + 1
 endfunction
 
 function! s:mid_sign_id(line)
-  return g:hl_fold_sign_id_offset + line
+  return g:hl_fold_sign_id_offset + a:line + 2
 endfunction
