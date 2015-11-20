@@ -1,30 +1,51 @@
-set foldenable
-let g:hl_fold_sign_id_offset = 1000
-sign define HlFoldStart text=┌
-sign define HlFoldMid   text=│
-sign define HlFoldEnd   text=└
-
+scriptencoding utf-8
 let s:last_cursor_moved = reltime()
-let g:hl_fold_cursor_hold = 0.1
 
-autocmd CursorMoved <buffer> call hl_fold#highlight_fold_lazy()
-autocmd CursorHold <buffer> call hl_fold#highlight_fold()
+function! hl_fold#toggle()
+  if g:hl_fold_enabled
+    call hl_fold#disable()
+  else
+    call hl_fold#enable()
+  endif
+endfunction
 
-function! hl_fold#highlight_fold_lazy()
+function! hl_fold#enable()
+  let g:hl_fold_enabled = 1
+  augroup hl_fold
+    autocmd CursorMoved <buffer> call hl_fold#show_lazy()
+    autocmd CursorHold <buffer> call hl_fold#show()
+  augroup END
+  call hl_fold#show()
+endfunction
+
+function! hl_fold#disable()
+  let g:hl_fold_enabled = 0
+  augroup hl_fold
+    autocmd!
+  augroup END
+  call hl_fold#hide()
+endfunction
+
+function! hl_fold#show_lazy()
   let hold = str2float(reltimestr(reltime(s:last_cursor_moved)))
   if hold > g:hl_fold_cursor_hold
-    call hl_fold#highlight_fold()
+    call hl_fold#show()
   endif
   let s:last_cursor_moved = reltime()
 endfunction
 
-function! hl_fold#highlight_fold()
+function! hl_fold#show()
   " find fold level edges and highlight them
   let initial_line = line('.')
   let start_line = s:find_fold_edge(initial_line, -1)
   let end_line = s:find_fold_edge(initial_line, +1)
 
   call s:update_signs(start_line, end_line)
+endfunction
+
+function! hl_fold#hide()
+  " remove signs
+  call s:update_signs(0, 0)
 endfunction
 
 function! s:find_fold_edge(initial_line, increment)
