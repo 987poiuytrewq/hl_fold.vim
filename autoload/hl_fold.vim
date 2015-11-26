@@ -148,3 +148,7 @@ endfunction
 function! s:mid_sign_id(line)
   return g:hl_fold_sign_id_offset + a:line + 2
 endfunction
+
+if g:hl_fold_enabled
+  call hl_fold#enable()
+endif

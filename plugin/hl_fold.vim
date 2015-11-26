@@ -70,7 +70,3 @@ command! HlFoldEnable call hl_fold#enable()
 command! HlFoldDisable call hl_fold#disable()
 command! HlFoldShow call hl_fold#show()
 command! HlFoldHide call hl_fold#hide()
-
-if g:hl_fold_enabled
-  call hl_fold#enable()
-endif
