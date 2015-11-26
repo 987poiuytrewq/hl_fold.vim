@@ -9,13 +9,13 @@ if !exists('g:hl_fold_sign_id_offset')
 end
 
 if !exists('g:hl_fold_start_linehl')
-  let g:hl_fold_start_linehl = 0
+  let g:hl_fold_start_linehl = ''
 end
 if !exists('g:hl_fold_mid_linehl')
-  let g:hl_fold_mid_linehl = 0
+  let g:hl_fold_mid_linehl = ''
 end
 if !exists('g:hl_fold_end_linehl')
-  let g:hl_fold_end_linehl = 0
+  let g:hl_fold_end_linehl = ''
 end
 
 if !exists('g:hl_fold_start_text')
@@ -40,13 +40,13 @@ end
 
 function! hl_fold#define_sign(name, linehl, text, texthl)
   let definition = 'sign define ' . a:name
-  if a:linehl != 0
+  if !empty(a:linehl)
     let definition .= ' linehl=' . a:linehl
   endif
-  if a:text != 0
+  if !empty(a:text)
     let definition .= ' text=' . a:text
   endif
-  if a:texthl != 0
+  if !empty(a:texthl)
     let definition .= ' texthl=' . a:texthl
   endif
   execute definition
