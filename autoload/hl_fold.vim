@@ -30,7 +30,7 @@ function! hl_fold#enable_buffer()
   let g:hl_fold_enabled = 1
   augroup hl_fold
     autocmd CursorMoved <buffer> call hl_fold#show_lazy()
-    autocmd CursorHold <buffer> call hl_fold#show()
+    autocmd CursorHold,CursorHoldI,InsertEnter,InsertLeave <buffer> call hl_fold#show()
   augroup END
   call hl_fold#show()
 endfunction
@@ -80,64 +80,56 @@ function! s:update_signs(start_line, end_line)
   " update the old signs to the new signs
   let buffer = bufnr('%')
 
-  " only update signs if the fold has changed
+  if !exists('b:hl_fold_signs')
+    let b:hl_fold_lines = []
+  endif
 
-  let old_fold = exists('b:hl_fold_start_line') && exists('b:hl_fold_end_line')
+  let old_fold = len(b:hl_fold_lines) > 1
   let new_fold = a:end_line > a:start_line
-  let update_start = !old_fold || !new_fold || a:start_line != b:hl_fold_start_line
-  let update_end = !old_fold || !new_fold || a:end_line != b:hl_fold_end_line
 
-  if update_start
-    " move the start sign
-    call s:unplace_sign(s:start_sign_id(), buffer)
+  " move the start sign
+  if new_fold || (old_fold && a:start_line != b:hl_fold_lines[0])
+    if old_fold
+      call s:unplace_sign(s:start_sign_id(), buffer)
+    endif
     if new_fold
       call s:place_sign(s:start_sign_id(), buffer, a:start_line, 'HlFoldStart')
     endif
   endif
 
-  if update_end
-    " move the end sign
-    call s:unplace_sign(s:end_sign_id(), buffer)
+  " move the end sign
+  if new_fold || (old_fold && a:end_line != b:hl_fold_lines[-1])
+    if old_fold
+      call s:unplace_sign(s:end_sign_id(), buffer)
+    endif
     if new_fold
       call s:place_sign(s:end_sign_id(), buffer, a:end_line, 'HlFoldEnd')
     endif
   endif
 
-  if update_start || update_end
-    if exists('b:hl_fold_start_line') && exists('b:hl_fold_end_line')
-      " unplace signs inside old fold but not inside new fold and
-      " place signs inside new fold but not inside old fold
-      let line = min([a:start_line, b:hl_fold_start_line])
-      while line < max([a:end_line, b:hl_fold_end_line])
-        if line > b:hl_fold_start_line && line < b:hl_fold_end_line
-              \ && (line <= a:start_line || line >= a:end_line)
-          " line in old fold but not in new fold
-          call s:unplace_sign(s:mid_sign_id(line), buffer)
-        elseif new_fold
-              \ && line > a:start_line && line < a:end_line
-              \ && (line <= b:hl_fold_start_line || line >= b:hl_fold_end_line)
-          " line in new fold but not in old fold
-          call s:place_sign(s:mid_sign_id(line), buffer, line, 'HlFoldMid')
-        endif
-        let line += 1
-      endwhile
-    else
-      " just place the mid signs
-      let line = a:start_line + 1
-      while line < a:end_line
-        call s:place_sign(s:mid_sign_id(line), buffer, line, 'HlFoldMid')
-        let line += 1
-      endwhile
-    endif
+  " remove old mid signs
+  if len(b:hl_fold_line) > 2
+    for line in b:hl_fold_lines[1:-2]
+      if line < a:start_line || line > a:end_line
+        call s:unplace_sign(s:mid_sign_id(line), buffer)
+      endif
+    endfor
   endif
 
-  if new_fold
-    let b:hl_fold_start_line = a:start_line
-    let b:hl_fold_end_line = a:end_line
-  elseif old_fold
-    unlet b:hl_fold_start_line
-    unlet b:hl_fold_end_line
+  " add new mid signs
+  if a:end_line > a:start_line + 1
+    let lines = [a:start_line]
+    let line = a:start_line + 1
+    while line < a:end_line
+      call add(lines, line)
+      if index(new_line, b:hl_fold_lines) != -1
+        call s:place_sign(s:mid_sign_id(line), buffer, line, 'HlFoldMid')
+      endif
+    endwhile
+    call add(lines, a:end_line)
   endif
+
+  let b:hl_fold_lines = lines
 endfunction
 
 function! s:place_sign(sign_id, buffer, line, name)
