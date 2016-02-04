@@ -1,5 +1,13 @@
+if exists('g:hl_fold_loaded')
+  finish
+endif
+let g:hl_fold_loaded = 1
+
 if !exists('g:hl_fold_enabled')
   let g:hl_fold_enabled = 1
+end
+if !exists('g:hl_fold_filetypes')
+  let g:hl_fold_filetypes = '*'
 end
 if !exists('g:hl_fold_cursor_hold')
   let g:hl_fold_cursor_hold = 0.1

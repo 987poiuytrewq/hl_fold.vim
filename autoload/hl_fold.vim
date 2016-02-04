@@ -10,6 +10,23 @@ function! hl_fold#toggle()
 endfunction
 
 function! hl_fold#enable()
+  augroup hl_fold
+    autocmd!
+    exec 'autocmd FileType' g:hl_fold_filetypes 'call hl_fold#enable_buffer()'
+  augroup END
+  doautoall hl_fold FileType
+endfunction
+
+function! hl_fold#disable()
+  augroup hl_fold
+    autocmd!
+    autocmd User * call hl_fold#hide()
+  augroup END
+  doautoall hl_fold User
+  autocmd! hl_fold User *
+endfunction
+
+function! hl_fold#enable_buffer()
   let g:hl_fold_enabled = 1
   augroup hl_fold
     autocmd CursorMoved <buffer> call hl_fold#show_lazy()
@@ -18,7 +35,7 @@ function! hl_fold#enable()
   call hl_fold#show()
 endfunction
 
-function! hl_fold#disable()
+function! hl_fold#disable_buffer()
   let g:hl_fold_enabled = 0
   augroup hl_fold
     autocmd!
