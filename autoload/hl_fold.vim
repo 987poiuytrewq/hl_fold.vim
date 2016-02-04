@@ -80,7 +80,7 @@ function! s:update_signs(start_line, end_line)
   " update the old signs to the new signs
   let buffer = bufnr('%')
 
-  if !exists('b:hl_fold_signs')
+  if !exists('b:hl_fold_lines')
     let b:hl_fold_lines = []
   endif
 
