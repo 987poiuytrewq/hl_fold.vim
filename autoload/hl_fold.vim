@@ -117,8 +117,9 @@ function! s:update_signs(start_line, end_line)
   endif
 
   " add new mid signs
+  let lines = []
   if a:end_line > a:start_line + 1
-    let lines = [a:start_line]
+    call add(lines, a:start_line)
     let line = a:start_line + 1
     while line < a:end_line
       call add(lines, line)
