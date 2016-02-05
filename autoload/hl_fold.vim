@@ -123,9 +123,10 @@ function! s:update_signs(start_line, end_line)
     let line = a:start_line + 1
     while line < a:end_line
       call add(lines, line)
-      if index(line, b:hl_fold_lines) != -1
+      if index(b:hl_fold_lines, line) != -1
         call s:place_sign(s:mid_sign_id(line), buffer, line, 'HlFoldMid')
       endif
+      let line += 1
     endwhile
     call add(lines, a:end_line)
   endif
