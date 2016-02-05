@@ -84,7 +84,7 @@ function! s:update_signs(start_line, end_line)
     let b:hl_fold_lines = []
   endif
 
-  let old_fold = len(b:hl_fold_lines) > 1
+  let old_fold = len(b:hl_fold_lines) >= 2
   let new_fold = a:end_line > a:start_line
 
   " move the start sign
@@ -108,7 +108,7 @@ function! s:update_signs(start_line, end_line)
   endif
 
   " remove old mid signs
-  if len(b:hl_fold_line) > 2
+  if len(b:hl_fold_lines) > 2
     for line in b:hl_fold_lines[1:-2]
       if line < a:start_line || line > a:end_line
         call s:unplace_sign(s:mid_sign_id(line), buffer)
