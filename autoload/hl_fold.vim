@@ -58,7 +58,7 @@ function! hl_fold#show()
   let start_line = s:find_fold_edge(initial_line, -1)
   let end_line = s:find_fold_edge(initial_line, +1)
   let fold_size = end_line - start_line
-  if fold_size <= 0 || fold_size > g:hl_fold_max_fold_size
+  if fold_size <= 0 || fold_size > g:hl_fold_max_size
     call hl_fold#hide()
   else
     call s:update_signs(start_line, end_line)
