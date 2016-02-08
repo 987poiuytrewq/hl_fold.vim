@@ -80,58 +80,52 @@ function! s:update_signs(start_line, end_line)
   " update the old signs to the new signs
   let buffer = bufnr('%')
 
-  if !exists('b:hl_fold_lines')
-    let b:hl_fold_lines = []
-  endif
-
-  let old_fold = len(b:hl_fold_lines) >= 2
-  let new_fold = a:end_line > a:start_line
-
   " move the start sign
-  if new_fold || (old_fold && a:start_line != b:hl_fold_lines[0])
-    if old_fold
+  if !exists('b:hl_fold_start_line')
+    let b:hl_fold_start_line = 0
+  endif
+  if a:start_line != b:hl_fold_start_line
+    if b:hl_fold_start_line > 0
       call s:unplace_sign(s:start_sign_id(), buffer)
     endif
-    if new_fold
+    if a:start_line > 0
       call s:place_sign(s:start_sign_id(), buffer, a:start_line, 'HlFoldStart')
     endif
   endif
 
   " move the end sign
-  if new_fold || (old_fold && a:end_line != b:hl_fold_lines[-1])
-    if old_fold
+  if !exists('b:hl_fold_end_line')
+    let b:hl_fold_end_line = 0
+  endif
+  if a:end_line != b:hl_fold_end_line
+    if b:hl_fold_end_line > 0
       call s:unplace_sign(s:end_sign_id(), buffer)
     endif
-    if new_fold
+    if a:end_line > 0
       call s:place_sign(s:end_sign_id(), buffer, a:end_line, 'HlFoldEnd')
     endif
   endif
 
-  " remove old mid signs
-  if len(b:hl_fold_lines) > 2
-    for line in b:hl_fold_lines[1:-2]
-      if line < a:start_line || line > a:end_line
-        call s:unplace_sign(s:mid_sign_id(line), buffer)
-      endif
-    endfor
-  endif
+  " unplace old mid signs
+  let line = b:hl_fold_start_line + 1
+  while line <= b:hl_fold_end_line - 1
+    if line <= a:start_line || line >= a:end_line
+      call s:unplace_sign(s:mid_sign_id(line), buffer)
+    endif
+    let line += 1
+  endwhile
 
-  " add new mid signs
-  let lines = []
-  if a:end_line > a:start_line + 1
-    call add(lines, a:start_line)
-    let line = a:start_line + 1
-    while line < a:end_line
-      call add(lines, line)
-      if index(b:hl_fold_lines, line) != -1
-        call s:place_sign(s:mid_sign_id(line), buffer, line, 'HlFoldMid')
-      endif
-      let line += 1
-    endwhile
-    call add(lines, a:end_line)
-  endif
+  " place new mid signs
+  let line = a:start_line + 1
+  while line <= a:end_line - 1
+    if line <= b:hl_fold_start_line || line >= b:hl_fold_end_line
+      call s:place_sign(s:mid_sign_id(line), buffer, line, 'HlFoldMid')
+    endif
+    let line += 1
+  endwhile
 
-  let b:hl_fold_lines = lines
+  let b:hl_fold_start_line = a:start_line
+  let b:hl_fold_end_line = a:end_line
 endfunction
 
 function! s:place_sign(sign_id, buffer, line, name)
