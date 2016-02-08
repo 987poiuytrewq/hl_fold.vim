@@ -14,6 +14,7 @@ function! hl_fold#enable()
     autocmd!
     exec 'autocmd FileType' g:hl_fold_filetypes 'call hl_fold#enable_buffer()'
   augroup END
+
   doautoall hl_fold FileType
 endfunction
 
@@ -56,8 +57,12 @@ function! hl_fold#show()
   let initial_line = line('.')
   let start_line = s:find_fold_edge(initial_line, -1)
   let end_line = s:find_fold_edge(initial_line, +1)
-
-  call s:update_signs(start_line, end_line)
+  let fold_size = end_line - start_line
+  if fold_size <= 0 || fold_size > g:hl_fold_max_fold_size
+    call hl_fold#hide()
+  else
+    call s:update_signs(start_line, end_line)
+  end
 endfunction
 
 function! hl_fold#hide()
@@ -70,7 +75,7 @@ function! s:find_fold_edge(initial_line, increment)
   " traversing in the direction given by a:increment
   let line = copy(a:initial_line)
   let initial_level = foldlevel(a:initial_line)
-  while initial_level > 0 && foldlevel(line) >= initial_level
+  while initial_level > g:hl_fold_min_level && foldlevel(line) >= initial_level
     let line += a:increment
   endwhile
   return line
