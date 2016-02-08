@@ -6,6 +6,10 @@ let g:hl_fold_loaded = 1
 if !exists('g:hl_fold_enabled')
   let g:hl_fold_enabled = 1
 end
+if !exists('g:hl_fold_hide_on_insert')
+  let g:hl_fold_hide_on_insert = 0
+end
+
 if !exists('g:hl_fold_min_level')
   let g:hl_fold_min_level = 0
 end

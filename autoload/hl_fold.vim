@@ -31,7 +31,10 @@ function! hl_fold#enable_buffer()
   let g:hl_fold_enabled = 1
   augroup hl_fold
     autocmd CursorMoved <buffer> call hl_fold#show_lazy()
-    autocmd CursorHold,CursorHoldI,InsertEnter,InsertLeave <buffer> call hl_fold#show()
+    if g:hl_fold_hide_on_insert
+      autocmd CursorHoldI,InsertEnter <buffer> call hl_fold#hide()
+      autocmd CursorHold,InsertLeave <buffer> call hl_fold#show()
+    end
   augroup END
   call hl_fold#show()
 endfunction
